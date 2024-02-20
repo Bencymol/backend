@@ -38,7 +38,7 @@ router.post("/login", async (req, res) => {
     return res.status(404).json({ message: "User name or Password incorrect" });
   }
   const secretKey =
-    "hcbshcbdjhsdhfjsnmnkncdjvsuhfiwu8ruirfrheuri33uehfjsncmxcbnxcnber6464u8itjrnfjehuty";
+    "hcbshcbdjhsdhfjsnmnkncdjvsuhfiwu8ruirfrheuri33uehfjsncmxcbnxcnber646fgre45rgrh433eytyt56gh";
 
   const token = jwt.sign({ role: "DOCTOR", id: doctor._id }, secretKey, {
     expiresIn: "2h",
