@@ -1,5 +1,5 @@
 import express from "express";
-import Doctor from "../../db/model/doctorSchema.js";
+import User from "../../db/model/userSchema.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
@@ -8,8 +8,8 @@ const router = express.Router();
 router.post("/signup", async (req, res) => {
   const body = { ...req.body };
   try {
-    const doctor = await Doctor.findOne({ userName: body.userName });
-    if (doctor) {
+    const user = await User.findOne({ userName: body.userName });
+    if (user) {
       return res.status(403).json({ message: "Username already taken!" });
     }
     if (body.password !== body.confirmPassword) {
@@ -19,7 +19,7 @@ router.post("/signup", async (req, res) => {
     const hashedPassword = await bcrypt.hash(body.password, 2);
 
     body.password = hashedPassword;
-    await Doctor.create(body);
+    await User.create(body);
 
     return res.status(201).json({ message: "Signup successfull" });
   } catch (e) {
@@ -29,22 +29,24 @@ router.post("/signup", async (req, res) => {
 
 router.post("/login", async (req, res) => {
   const body = { ...req.body };
-  const doctor = await Doctor.findOne({ userName: body.userName });
-  if (!doctor) {
+  const user = await User.findOne({ userName: body.userName });
+  if (!user) {
     return res.status(404).json({ message: "User name or Password incorrect" });
   }
-  const isMatching = bcrypt.compare(body.password, doctor.password);
+
+  const isMatching = await bcrypt.compare(body.password, user.password);
   if (!isMatching) {
     return res.status(404).json({ message: "User name or Password incorrect" });
   }
-  const secretKey =
-    "hcbshcbdjhsdhfjsnmnkncdjvsuhfiwu8ruirfrheuri33uehfjsncmxcbnxcnber6464u8itjrnfjehuty";
 
-  const token = jwt.sign({ role: "DOCTOR", id: doctor._id }, secretKey, {
-    expiresIn: "2h",
-  });
-
-  res.status(200).json({ message: "Login successfull", token: token });
+  const token = jwt.sign(
+    { role: "USER", id: user._id },
+    process.env.USER_SECRET_KEY,
+    {
+      expiresIn: "2h",
+    }
+  );
+  return res.status(200).json({ message: "Login Successfull", token: token });
 });
 
 export default router;
