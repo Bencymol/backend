@@ -2,6 +2,8 @@ import express from "express";
 import Doctor from "../../db/model/doctorSchema.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
+import checkToken from "../../middlewares/checkToken.js";
 
 const router = express.Router();
 
@@ -37,14 +39,53 @@ router.post("/login", async (req, res) => {
   if (!isMatching) {
     return res.status(404).json({ message: "User name or Password incorrect" });
   }
-  const secretKey =
-    "hcbshcbdjhsdhfjsnmnkncdjvsuhfiwu8ruirfrheuri33uehfjsncmxcbnxcnber646fgre45rgrh433eytyt56gh";
 
-  const token = jwt.sign({ role: "DOCTOR", id: doctor._id }, secretKey, {
-    expiresIn: "2h",
-  });
+  const token = jwt.sign(
+    { role: "DOCTOR", id: doctor._id },
+    process.env.SECRET_KEY,
+    {
+      expiresIn: "2h",
+    }
+  );
 
   res.status(200).json({ message: "Login successfull", token: token });
+});
+
+//get doc by id
+
+router.get("/profile/:id", checkToken(["USER"]), async (req, res) => {
+  const { id } = req.params;
+
+  // const doctor = await Doctor.findById(id).populate("department");
+  // doctor.password = "";
+
+  const doctor = await Doctor.aggregate([
+    {
+      $match: {
+        //instead of findbyid
+        _id: new mongoose.Types.ObjectId(id),
+      },
+    },
+    {
+      $lookup: {
+        from: "departments",
+        localField: "department",
+        foreignField: "_id",
+        as: "departmentDetails",
+      },
+    },
+    {
+      $project: {
+        name: 1,
+        userName: 1,
+        image: 1,
+        specialization: 1,
+        departmentDetails: 1,
+      },
+    },
+  ]);
+
+  res.status(200).json(doctor);
 });
 
 export default router;

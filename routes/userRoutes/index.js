@@ -2,6 +2,8 @@ import express from "express";
 import User from "../../db/model/userSchema.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
+import checkToken from "../../middlewares/checkToken.js";
 
 const router = express.Router();
 
@@ -41,12 +43,42 @@ router.post("/login", async (req, res) => {
 
   const token = jwt.sign(
     { role: "USER", id: user._id },
-    process.env.USER_SECRET_KEY,
+    process.env.SECRET_KEY,
     {
       expiresIn: "2h",
     }
   );
   return res.status(200).json({ message: "Login Successfull", token: token });
+});
+
+//get user by id
+
+router.get("/profile/:id", checkToken(["DOCTOR"]), async (req, res) => {
+  const { id } = req.params;
+  try {
+    // const user = await User.findById(id);
+    // user.password = "";
+
+    const user = await User.aggregate([
+      {
+        $match: {
+          //instead of findbyid
+          _id: new mongoose.Types.ObjectId(id),
+        },
+      },
+      {
+        $project: {
+          name: 1,
+          userName: 1,
+          image: 1,
+          email: 1,
+        },
+      },
+    ]);
+    res.status(200).json(user);
+  } catch (e) {
+    res.status(404).json({ message: "Unable to find" });
+  }
 });
 
 export default router;

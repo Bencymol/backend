@@ -18,3 +18,7 @@ const prescriptionSchema = Schema({
   },
   medication: [{ type: Schema.Types.ObjectId, ref: "Pharmacy" }],
 });
+
+const Prescription = model("Prescription", prescriptionSchema);
+
+export default Prescription;
